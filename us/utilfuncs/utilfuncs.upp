@@ -1,0 +1,13 @@
+description "cpp utility functions (no upp)\377";
+
+library
+	stdc++fs,
+	magic;
+
+file
+	utilfuncs.h,
+	utilfuncs.cpp;
+
+mainconfig
+	"" = "";
+

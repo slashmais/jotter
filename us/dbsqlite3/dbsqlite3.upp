@@ -1,0 +1,15 @@
+uses
+	utilfuncs;
+
+library
+	sqlite3;
+
+file
+	dbsqlite3types.h,
+	dbsqlite3.h,
+	dbsqlite3.cpp,
+	USE_EXAMPLE.txt;
+
+mainconfig
+	"" = "";
+

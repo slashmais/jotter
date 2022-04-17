@@ -1,0 +1,498 @@
+
+#######################################################
+#####SAMPLE_USE_HEADER
+
+[sample_db.h] ///from mockup-prj
+
+#ifndef _sample_db_h_
+#define _sample_db_h_
+
+#include "dbsqlite3.h"
+
+//--------------------------------------------------------------------------------------------------
+struct Project;
+struct Dependencies;
+struct ProjectList;
+
+struct DB_SAMPLE_DB : public DBsqlite3
+{
+	virtual ~DB_SAMPLE_DB() {}
+	
+	bool ImplementSchema();
+
+	bool Save(Project &P);
+	bool Save(Dependencies &Deps);
+	
+	bool Load(ProjectList &PL);
+	bool Load(Dependencies &deps);
+
+};
+
+extern DB_SAMPLE_DB muDB;
+
+
+#endif //_DBDATA_H_
+
+
+
+#######################################################
+#####SAMPLE_USE_SOURCE
+
+[sample_db.cpp] ///from mockup-prj
+
+
+#include "sample_db.h"
+#include "utilfunc.h"		//!
+#include <string>
+
+#include "mu_projects.h"
+
+//--------------------------------------------------------------------------------------------------
+DB_SAMPLE_DB muDB; //main db
+
+
+//--------------------------------------------------------------------------------------------------(schema)
+bool DB_SAMPLE_DB::ImplementSchema()
+{
+	bool b=bDBOK;
+	DBResult RS;
+	std::string sSQL;
+
+	if (b)
+	{
+		sSQL = "CREATE TABLE IF NOT EXISTS IDS (name, id, del)";
+		ExecSQL(&RS, sSQL); //create/reuse ids: init_ids(tabelname) once after CREATE TABLE.. and new_id() / del_id() after
+		b=NoError(this);
+	}
+	if (b) b = (MakeTable("projects", "idproject, name, description, status, datadir")&&init_ids("projects"));
+	if (b) b = (MakeTable("discards", "idword, word, bglobal, csvdpids, csvapids")&&init_ids("discards"));
+	if (b) b = MakeTable("depends", "idproject, iddep, reason");
+
+	///todo:...table: journal - for ideas, todos, etc that applies to various projects...also for system-generated suggestions...
+
+	return b;
+}
+
+
+//--------------------------------------------------------------------------------------------------(projects)
+bool DB_SAMPLE_DB::Save(Project &P)
+{
+	std::string sSQL;
+	DBResult RS;
+	bool b=false;
+	if (P.id)
+	{
+		sSQL=spf("UPDATE projects SET",
+					" name = ", SQLSafeQ(P.name),
+					", description = ", SQLSafeQ(P.description),
+					", status = ", P.status,
+					", datadir = ", SQLSafeQ(P.datadir),
+					" WHERE idproject = ", P.id);
+		ExecSQL(&RS, sSQL);
+	}
+	else
+	{
+		P.id=new_id("projects");
+		sSQL=spf("INSERT INTO projects(idproject, name, description, status, datadir) VALUES(",
+					P.id,
+					", ", SQLSafeQ(P.name),
+					", ", SQLSafeQ(P.description),
+					", ", P.status,
+					", ", SQLSafeQ(P.datadir), ")");
+		ExecSQL(&RS, sSQL);
+	}
+	//if (NoError(this)) b=save_components(P.components, P.id);
+	//return b;
+	return NoError(this);
+}
+
+bool DB_SAMPLE_DB::Save(Dependencies &Deps)
+{
+	//..
+	return true;
+}
+
+bool DB_SAMPLE_DB::Load(ProjectList &PL)
+{
+	DBResult RS;
+	size_t i=0,n;
+
+	PL.clear();
+
+	n = ExecSQL(&RS, "SELECT * FROM projects");
+	if (NoError(this))
+	{
+		while (i<n)
+		{
+			Project P;
+			P.id = stot<size_t>(RS.GetVal("idproject", i));
+			P.name = SQLRestore(RS.GetVal("name", i));
+			P.description = SQLRestore(RS.GetVal("description", i));
+			P.status = stot<int>(RS.GetVal("status", i));
+			P.datadir = SQLRestore(RS.GetVal("datadir", i));
+			//load_components(P.components, P.id);
+			PL[P.id]=P;
+			i++;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool DB_SAMPLE_DB::Load(Dependencies &deps)
+{
+	deps.clear();
+
+	//...	
+	
+	return true;
+	
+}
+
+
+
+
+//--------------------------------------------------------------------------------------------------
+//bool DB_MU::Load(WTConfig *pwtc)
+//{
+//	DBResult RS;
+//	int n;
+//
+//	n = ExecSQL(&RS, "SELECT * FROM wtconfig");
+//	if (NoError(this))
+//	{
+//		if (n>0)
+//		{
+//			pwtc->blocked = (stot<int>(RS.GetVal("lock", 0))==1);
+//			pwtc->X = stot<int>(RS.GetVal("x", 0));
+//			pwtc->Y= stot<int>(RS.GetVal("y", 0));
+//			pwtc->W = stot<int>(RS.GetVal("w", 0));
+//			pwtc->H = stot<int>(RS.GetVal("h", 0));
+//			pwtc->periods = stot<int>(RS.GetVal("periods", 0));
+//			pwtc->bAlert = (stot<int>(RS.GetVal("alert", 0))==1);
+//		}
+//		return true;
+//	}
+//	return false;
+//}
+//
+//
+//bool DB_MU::Load(WTProjectList &PL)
+//{
+//	DBResult RS;
+//	size_t i=0,n;
+//
+//	PL.clear();
+//
+//	n = ExecSQL(&RS, "SELECT * FROM projects");
+//	if (NoError(this))
+//	{
+//		while (i<n)
+//		{
+//			WTProject P;
+//			P.id = stot<size_t>(RS.GetVal("idproject", i));
+//			P.Name = SQLRestore(RS.GetVal("name", i));
+//			P.nState = stot<int>(RS.GetVal("state", i));
+//			P.Purpose = SQLRestore(RS.GetVal("purpose", i));
+//			P.Priority = stot<int>(RS.GetVal("priority", i));
+//			Load(P.TL, P.id);
+//			load_deps(P.deps, P.id);
+//			load_locs(P.locs, P.id);
+//			PL[P.id]=P;
+//			i++;
+//		}
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool DB_MU::load_deps(Dependencies &Deps, size_t idP)
+//{
+//	size_t i,n;
+//	std::string sSQL;
+//	DBResult RS;
+//	
+//	Deps.clear();
+//	
+//	sSQL=spf("SELECT * FROM depends WHERE idproject = ", idP);
+//	n = ExecSQL(&RS, sSQL);
+//	if (NoError(this))
+//	{
+//		i=0;
+//		while (i<n)
+//		{
+//			Dependency D;
+//			D.idP = idP;
+//			D.idDep = stot<size_t>(RS.GetVal("iddep", i));
+//			D.reason = SQLRestore(RS.GetVal("reason", i));
+//			Deps.push_back(D);
+//			i++;
+//		}
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool DB_MU::load_locs(Locations &Locs, size_t idP)
+//{
+//	size_t i,n;
+//	std::string sSQL;
+//	DBResult RS;
+//	
+//	Locs.clear();
+//	
+//	sSQL=spf("SELECT * FROM locations WHERE idproject = ", idP);
+//	n = ExecSQL(&RS, sSQL);
+//	if (NoError(this))
+//	{
+//		i=0;
+//		while (i<n)
+//		{
+//			Location L;
+//			L.idP = idP;
+//			L.description = SQLRestore(RS.GetVal("description", i));
+//			L.location = SQLRestore(RS.GetVal("location", i));
+//			Locs.push_back(L);
+//			i++;
+//		}
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool DB_MU::Load(WTTodoList &TL, size_t idP)
+//{
+//	size_t i,n;
+//	std::string sSQL;
+//	DBResult RS;
+//	
+//	TL.clear();
+//	
+//	sSQL=spf("SELECT * FROM todos WHERE idproject = ", idP);
+//	n = ExecSQL(&RS, sSQL);
+//	if (NoError(this))
+//	{
+//		i=0;
+//		while (i<n)
+//		{
+//			WTTodo T;
+//			T.idP = idP;
+//			T.id = stot<size_t>(RS.GetVal("idtodo", i));
+//			T.What = SQLRestore(RS.GetVal("what", i));
+//			T.Info = SQLRestore(RS.GetVal("info", i));
+//			T.nState = stot<int>(RS.GetVal("state", i));
+//			TL[T.id]=T;
+//			i++;
+//		}
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool DB_MU::Save(WTConfig *pwtc)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	//zap & replace
+//	ExecSQL(&RS, "DELETE FROM wtconfig");
+//	sSQL=spf("INSERT INTO wtconfig(lock,x,y,w,h,periods,alert) VALUES(",
+//				(pwtc->blocked?1:0),
+//				", ", pwtc->X,
+//				", ", pwtc->Y,
+//				", ", pwtc->W,
+//				", ", pwtc->H,
+//				", ", pwtc->periods,
+//				", ", ((pwtc->bAlert)?1:0), ")");
+//	ExecSQL(&RS, sSQL);
+//	return NoError(this);
+//}
+//
+//bool DB_MU::Save(WTProject &P)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	bool b=false;
+//	if (P.id)
+//	{
+//		sSQL=spf("UPDATE projects SET",
+//					" name = ", SQLSafeQ(P.Name),
+//					", state = ", P.nState,
+//					", purpose = ", SQLSafeQ(P.Purpose),
+//					", priority = ", P.Priority,
+//					" WHERE idproject = ", P.id);
+//		ExecSQL(&RS, sSQL);
+//	}
+//	else
+//	{
+//		P.id=new_id("projects");
+//		sSQL=spf("INSERT INTO projects(idproject, name, state, purpose, priority) VALUES(",
+//					P.id,
+//					", ", SQLSafeQ(P.Name),
+//					", ", P.nState,
+//					", ", SQLSafeQ(P.Purpose),
+//					", ", P.Priority, ")");
+//		ExecSQL(&RS, sSQL);
+//	}
+//	if (NoError(this))  b=(save_deps(P.deps, P.id)&&save_locs(P.locs, P.id));
+//	return b;
+//}
+//
+//bool DB_MU::save_deps(Dependencies &Deps, size_t idP)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	
+//	sSQL=spf("DELETE FROM depends WHERE idproject = ", idP);
+//	ExecSQL(&RS, sSQL);
+//	
+//	if (!Deps.empty())
+//	{
+//		for (auto& d:Deps)
+//		{
+//			d.idP=idP;
+//			sSQL=spf("INSERT INTO depends(idproject, iddep, reason) VALUES(",
+//						d.idP,
+//						", ", d.idDep,
+//						", ", SQLSafeQ(d.reason), ")");
+//			ExecSQL(&RS, sSQL);
+//			if (!NoError(this)) return false;
+//		}
+//	}
+//	return true;
+//}
+//
+//bool DB_MU::save_locs(Locations &Locs, size_t idP)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	
+//	sSQL=spf("DELETE FROM locations WHERE idproject = ", idP);
+//	ExecSQL(&RS, sSQL);
+//	
+//	if (!Locs.empty())
+//	{
+//		for (auto& l:Locs)
+//		{
+//			l.idP=idP;
+//			sSQL=spf("INSERT INTO locations(idproject, description, location) VALUES(",
+//						l.idP,
+//						", ", SQLSafeQ(l.description),
+//						", ", SQLSafeQ(l.location), ")");
+//			ExecSQL(&RS, sSQL);
+//			if (!NoError(this)) return false; //else continue with next l
+//		}
+//	}
+//	return true;
+//}
+//
+//bool DB_MU::Save(WTTodo &T)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//
+//	if (T.id)
+//	{
+//		sSQL=spf("UPDATE todos SET what = ", SQLSafeQ(T.What),
+//								", info = ", SQLSafeQ(T.Info),
+//								", state = ", T.nState,
+//								" WHERE idtodo = ", T.id);
+//		ExecSQL(&RS, sSQL);
+//	}
+//	else
+//	{
+//		T.id=new_id("todos");
+//		sSQL=spf("INSERT INTO todos(idtodo, idproject, what, info, state) VALUES(",
+//					T.id,
+//					", ",	T.idP,
+//					", ",	SQLSafeQ(T.What),
+//					", ",	SQLSafeQ(T.Info),
+//					", ",	T.nState, ")");
+//		ExecSQL(&RS, sSQL);
+//	}
+//	return NoError(this);
+//}
+//
+//bool DB_MU::Delete(WTProject &P)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	auto del_todos=[&]()->bool
+//		{
+//			WTTodoList TL;
+//			if (Load(TL, P.id))
+//			{
+//				for (auto t:TL)
+//				{
+//					if (!Delete(t.second, true)) return false;
+//				}
+//				return true;
+//			}
+//			return false;
+//		};
+//	ExecSQL(&RS, "BEGIN TRANSACTION");
+//		sSQL=spf("DELETE FROM projects WHERE idproject = ", P.id);
+//		ExecSQL(&RS, sSQL);
+//		if (NoError(this))
+//		{
+//			if (del_todos())
+//			{
+//				sSQL=spf("DELETE FROM depends WHERE idproject = ", P.id, " OR iddep = ", P.id);
+//				ExecSQL(&RS, sSQL);
+//				if (NoError(this))
+//				{
+//					sSQL=spf("DELETE FROM locations WHERE idproject = ", P.id);
+//					ExecSQL(&RS, sSQL);
+//					if (NoError(this)&&del_id("projects", P.id))
+//					{
+//						ExecSQL(&RS, "COMMIT");
+//						return true;
+//					}
+//				}
+//			}
+//		}
+//	ExecSQL(&RS, "ROLLBACK");
+//	return false;
+//}
+//
+//bool DB_MU::remove_dep(size_t iddep)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	sSQL=spf("DELETE FROM depends WHERE iddep = ", iddep);
+//	ExecSQL(&RS, sSQL);
+//	return NoError(this);
+//}
+//
+//bool DB_MU::Delete(WTTodo &T, bool bInTrans)
+//{
+//	std::string sSQL;
+//	DBResult RS;
+//	if (bInTrans)
+//	{
+//		sSQL=spf("DELETE FROM todos WHERE idtodo = ", T.id);
+//		ExecSQL(&RS, sSQL);
+//		if (NoError(this)) return del_id("todos", T.id);
+//	}
+//	else
+//	{
+//		ExecSQL(&RS, "BEGIN TRANSACTION");
+//			sSQL=spf("DELETE FROM todos WHERE idtodo = ", T.id);
+//			ExecSQL(&RS, sSQL);
+//			if (NoError(this))
+//			{
+//				if (del_id("todos", T.id))
+//				{
+//					ExecSQL(&RS, "COMMIT");
+//					return true;
+//				}
+//			}
+//		ExecSQL(&RS, "ROLLBACK");
+//	}
+//	return false;
+//
+//}
+
+
+
+
+

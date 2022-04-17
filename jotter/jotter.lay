@@ -1,0 +1,31 @@
+LAYOUT(jotterLayout, 524, 340)
+	ITEM(Upp::Label, dv___0, SetLabel(t_("Search:")).SetAlign(ALIGN_RIGHT).LeftPosZ(4, 40).TopPosZ(4, 19))
+	ITEM(Upp::EditString, ebSearch, HSizePosZ(48, 4).TopPosZ(4, 19))
+	ITEM(Upp::ArrayCtrl, arJots, AutoHideSb(true).HSizePosZ(0, 0).VSizePosZ(28, 28))
+	ITEM(Upp::Button, btnDropwords, SetLabel(t_("Dropwords..")).LeftPosZ(4, 68).BottomPosZ(4, 20))
+	ITEM(Upp::Button, btnClose, SetLabel(t_("Close")).RightPosZ(4, 60).BottomPosZ(4, 20))
+	ITEM(Upp::Button, btnHistory, SetLabel(t_("History..")).LeftPosZ(80, 60).BottomPosZ(4, 20))
+END_LAYOUT
+
+LAYOUT(uijotLayout, 356, 252)
+	ITEM(Upp::DocEdit, ebJot, HSizePosZ(0, 0).VSizePosZ(0, 40))
+	ITEM(Upp::Label, lblType, SetLabel(t_("Type:")).LeftPosZ(4, 28).BottomPosZ(13, 19))
+	ITEM(Upp::DropList, dlType, HSizePosZ(40, 188).BottomPosZ(13, 19))
+	ITEM(Upp::Button, btnAddType, SetLabel(t_("+")).RightPosZ(176, 12).BottomPosZ(13, 19))
+	ITEM(Upp::Button, btnDelType, SetLabel(t_("-")).SetFont(StdFont().Bold()).RightPosZ(164, 12).BottomPosZ(13, 19))
+	ITEM(Upp::Button, btnOK, SetLabel(t_("OK ")).RightPosZ(76, 60).BottomPosZ(12, 20))
+	ITEM(Upp::Button, btnCancel, SetLabel(t_("Cancel")).RightPosZ(8, 60).BottomPosZ(12, 20))
+	ITEM(Upp::Label, dv___7, SetLabel(t_("(Ctrl+Enter)")).SetAlign(ALIGN_CENTER).SetFont(SansSerifZ(9)).SetInk(Color(102, 102, 102)).RightPosZ(76, 56).BottomPosZ(4, 8))
+	ITEM(Upp::Label, dv___8, SetLabel(t_("(Esc)")).SetAlign(ALIGN_CENTER).SetFont(SansSerifZ(9)).SetInk(Color(102, 102, 102)).RightPosZ(12, 56).BottomPosZ(4, 8))
+END_LAYOUT
+
+LAYOUT(dropwordLayout, 420, 248)
+	ITEM(Upp::ColumnList, clDrops, HSizePosZ(0, 0).VSizePosZ(0, 0))
+END_LAYOUT
+
+LAYOUT(historyLayout, 384, 220)
+	ITEM(Upp::ArrayCtrl, arH, AutoHideSb(true).Header(false).AskRemove(false).VertGrid(false).HSizePosZ(0, 0).VSizePosZ(20, 36))
+	ITEM(Upp::Label, dv___1, SetLabel(t_("Deleted Jots")).LeftPosZ(0, 136).TopPosZ(0, 19))
+	ITEM(Upp::Button, btnClose, SetLabel(t_("Close")).LeftPosZ(316, 60).TopPosZ(192, 20))
+END_LAYOUT
+

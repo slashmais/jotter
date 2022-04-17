@@ -1,0 +1,27 @@
+uses
+	CtrlLib,
+	utilfuncs,
+	dbsqlite3;
+
+library
+	sqlite3;
+
+file
+	main.cpp,
+	jotter.h,
+	jotter.cpp,
+	jotter.lay,
+	jotter.iml,
+	jconfig.h,
+	jots.h,
+	jots.cpp,
+	jdb.h,
+	jdb.cpp,
+	jwords.h,
+	jwords.cpp,
+	pictures.h,
+	pictures.cpp;
+
+mainconfig
+	"" = "GUI";
+
