@@ -47,7 +47,7 @@ bool DB_Jotter::db_init_jtypes()
 	return b;
 }
 
-bool DB_Jotter::LoadJTypes(VUSTR &V)
+bool DB_Jotter::LoadJTypes(VUSSTR &V)
 {
 	DBResult RS;
 	size_t i=0,n;

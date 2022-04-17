@@ -18,7 +18,7 @@ using namespace Upp;
 struct Jotter : public WithjotterLayout<TopWindow>
 {
 	Jots jots;
-	VUSTR vjtypes;
+	VUSSTR vjtypes;
 	JotterConfig con;
 	size_t curid{0};
 	JotWords JWords;
